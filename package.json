@@ -1,0 +1,26 @@
+{
+  "name": "fs-crawler",
+  "version": "1.0.0",
+  "description": "Asynchronous options for crawling file system",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryanvazquez/fs-crawler.git"
+  },
+  "keywords": [
+    "fs",
+    "read",
+    "directory",
+    "crawl"
+  ],
+  "author": "Ryan Vazquez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ryanvazquez/read-dir/issues"
+  },
+  "homepage": "https://github.com/ryanvazquez/read-dir#readme",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "micromatch": "^4.0.2"
+  }
+}
