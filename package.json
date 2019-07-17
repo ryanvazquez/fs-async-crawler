@@ -7,6 +7,9 @@
     "type": "git",
     "url": "https://github.com/ryanvazquez/fs-crawler.git"
   },
+  "scripts": {
+    "test": "jest"
+  },
   "keywords": [
     "fs",
     "read",
@@ -22,5 +25,9 @@
   "dependencies": {
     "chalk": "^2.4.2",
     "micromatch": "^4.0.2"
+  },
+  "devDependencies": {
+    "jest": "^24.8.0",
+    "mock-fs": "^4.10.1"
   }
 }
