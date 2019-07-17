@@ -4,7 +4,6 @@ const crawler = require('../src/serial');
 
 /* 
   mock-fs issue: https://github.com/tschaub/mock-fs/issues/234
-  Tests fail with 
 */
 
 describe('serial', () => {
