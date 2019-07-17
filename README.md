@@ -13,7 +13,7 @@ A collection of configurable file system crawlers. Serial, Parallel, and Queued 
   ### **Params**
   | Param | Type | Description | Required |
   | :------- | :--- | :---------- | :------ |
-  | `path` | `string` | Absolute path of the directory to crawl | `true`|
+  | `path` | `string` | **Absolute** path of the directory to crawl | `true`|
   | `options` | `object` | [See Options](#Options) | `false` |
   | `callback`| `function` | The callback function will be fired after the crawler has completed crawling the directory tree or upon encountering an error | `true`|
   
