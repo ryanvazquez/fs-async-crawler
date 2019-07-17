@@ -31,7 +31,9 @@ function fsCrawlerSerial(root, options, finalCallback){
   options = typeof options === 'function' ? defaultOptions : { ...defaultOptions, ...options };
 
   if (options.maxDepth === undefined){
-    console.warn(chalk.yellow(`[fs-crawler] Warning: No maximum recursion depth set. This could adversely affect performance and possibly cause a stack overflow.`))
+    if (process.env.NODE_ENV === "development"){
+      console.warn(chalk.yellow(`[fs-crawler] Warning: No maximum recursion depth set. This could adversely affect performance and possibly cause a stack overflow.`))
+    }
   }
 
   function asyncCrawler(collection, worker, maxDepth, done){
@@ -85,7 +87,7 @@ function fsCrawlerSerial(root, options, finalCallback){
         }
         throw err
       }
-      
+
       if (stats && stats.isDirectory()){
         return fs.readdir(rootDir, (err, files) => {
           if (err){
