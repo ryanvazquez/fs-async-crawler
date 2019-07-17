@@ -16,7 +16,7 @@ A collection of configurable file system crawlers. Serial, Parallel, and Queued 
   | `path` | `string` | Absolute path of the directory to crawl | `true`|
   | `options` | `object` | [See Options](#Options) | `false` |
   | `callback`| `function` | The callback function will be fired after the crawler has completed crawling the directory tree or upon encountering an error | `true`|
-
+  
   ### **Options**
   | Property | Type | Description | Default 
   | :------- | :--- | :---------- | :------ |
@@ -25,7 +25,9 @@ A collection of configurable file system crawlers. Serial, Parallel, and Queued 
   | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `[*]` 
     
 # **Usage**
-### Get all files within a directory. Ignores `node_modules` by default.
+### Get all files within a directory.
+
+> Note: Ignores `node_modules` by default.
 ```js
 const crawler = require('fs-crawler').serial;
 
@@ -53,43 +55,6 @@ const options = {
 };
 
 crawler('path/to/dir', options, (err, files) => {
-    if (err){
-      // do something with the error
-    } else {
-      // do something with the result
-  });
-```
-A collection of configurable file system crawlers.
-
-# How to Use
-
-Warning: If no maxDepth option is set, fs-crawler will crawl the **entire** directory starting from the root. This could have signficant performance issues for large directories.
-
-```js
-const crawler = require('fs-crawler').serial;
-
-crawler('path/to/dir', (err, results) => {
-  if (err){
-    // do something with the error
-  } else {
-    // do something with the results
-  }
-  });
-
-  // get ALL files matching a file extension in a root directory
-  
-crawler('path/to/dir', 
-    crawler('path/to/dir', 
-crawler('path/to/dir', 
-  {
-    match: ['**.[js](x)'], 
-        match: ['**.[js](x)'], 
-    match: ['**.[js](x)'], 
-    ignorePaths: [/node_modules/] 
-        ignorePaths: [/node_modules/] 
-    ignorePaths: [/node_modules/] 
-  }, 
-  (err, result) => {
     if (err){
       // do something with the error
     } else {
