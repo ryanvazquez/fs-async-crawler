@@ -1,7 +1,5 @@
-const { 
-  fsCrawlerSerial
-} = require('./src/serial');
+const serial = require('./src/serial');
 
 module.exports = {
-  serial: fsCrawlerSerial
+  serial
 };
