@@ -80,8 +80,12 @@ function fsCrawlerSerial(root, options, finalCallback){
   function fsWorker(rootDir, maxDepth, callback) {
     fs.stat(rootDir, (err, stats) => {
       if (err){
-        return callback(err, null);
+        if (err.code === 'ENOENT'){
+          return callback(null, rootDir);
+        }
+        throw err
       }
+      
       if (stats && stats.isDirectory()){
         return fs.readdir(rootDir, (err, files) => {
           if (err){
