@@ -1,6 +1,7 @@
 language: node_js
 node_js:
-  - "node"
+  - "stable"
 
-before_script:
-  - npm i -g npm@version-number
+cache:
+  directories:
+    - "node_modules"
