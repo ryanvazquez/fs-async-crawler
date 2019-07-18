@@ -25,7 +25,7 @@ A collection of configurable file system crawlers.
   | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null`
   | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`
   | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `[*]` 
-  | `predicate` | `function` | Function to test if file path should be evaluated. Must return a `Boolean`. Fires after `ignorePaths` and before `match`. [See Configuration](#Configuration)
+  | `predicate` | `function` | Function to test if file path should be evaluated. Must return a `Boolean`. Fires after `ignorePaths` and before `match`. [See Configuration](#Configuration) | `null` |
 
 ### **Configuration**
   | ignorePaths | match | predicate | result |
