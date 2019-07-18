@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 const micromatch = require('micromatch');
-const asyncIterator = require('./async-iterator');
 
 /* 
 
