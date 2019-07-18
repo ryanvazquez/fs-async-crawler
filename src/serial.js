@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 const micromatch = require('micromatch');
+const asyncIterator = require('./async-iterator');
 
 /* 
 
@@ -52,62 +53,136 @@ function fsCrawlerSerial(root, options, finalCallback){
       
       const task = collection[index];
 
-      worker(task, maxDepth, (err, result) => {
+      let shouldContinue = true;
+
+      if(!options.match || !options.match.length) {
+        if (options.predicate && typeof options.predicate === 'function'){
+          try {
+            shouldContinue = options.predicate(task);
+          } catch (err) {
+            return done(err, null);
+          }
+        }
+    
+        if (!shouldContinue){
+          return done(null, results);
+        }
+      }
+  
+      worker (task, maxDepth, (err, result) => {
         if (err){
           return done(err, null);
         }
-        if (options.match && options.match.length && !Array.isArray(result)){
-          result = micromatch(result, options.match);
+
+        if (options.match && options.match.length){
+          let matches = micromatch(result, options.match);
+
+          if (options.predicate && typeof options.predicate === 'function'){
+            try {
+
+              const filtered = [];
+              filter(0);
+
+              function filter(filterIndex){
+                if (filterIndex === matches.length){
+                  matches = filtered;
+                  return;
+                }
+
+                options.predicate(matches[filterIndex], (err, res) => {
+                  if (err){
+                    return done(err, null);
+                  }
+                  if (res){
+                    filtered.push(res);
+                  }
+                  return filter(filterIndex + 1);
+                })
+              }
+
+            } catch (err) {
+              return done(err, null);
+            }
+          }
+
+        results = results.concat(matches);
+        } else {
+          results = results.concat(result);
         }
-        results = results.concat(result);
+
         return iterate(index + 1);
-      })
+
+      });
     }
   }
 
-  function resolvePaths(root, filePaths){
-    return filePaths
-      .map(filePath => path.join(root, filePath))
-      .reduce((allFilePaths, filePath) => {
-        for (let i = 0; i < options.ignorePaths.length; i += 1){
-          const rgx = options.ignorePaths[i];
-          if (rgx.test(filePath)){
-            return allFilePaths;
-          }
+  function isValidDir(dir){
+    if (options.ignorePaths && options.ignorePaths.length){
+      for (let i = 0; i < options.ignorePaths.length; i += 1){
+        const rgx = options.ignorePaths[i];
+        if (rgx.test(dir)){
+          return false;
         }
-        return allFilePaths.concat(filePath);
-      }, []);
+      }
+    }
+    return true;
   }
 
-  function fsWorker(rootDir, maxDepth, callback) {
-    fs.stat(rootDir, (err, stats) => {
+  function resolvePaths(root, filePaths){
+    return filePaths.map(filePath => path.join(root, filePath));
+  }
+
+  function fsWorker(rootPath, maxDepth, callback) {
+    fs.stat(rootPath, (err, stats) => {
       if (err){
         if (err.code === 'ENOENT'){
-          return callback(null, rootDir);
+          return callback(null, rootPath);
         }
-        throw err
+        return callback(err, null);
       }
 
       if (stats && stats.isDirectory()){
-        return fs.readdir(rootDir, (err, files) => {
+        if (!isValidDir(rootPath)){
+          return callback(null, []);
+        }
+
+        return fs.readdir(rootPath, (err, files) => {
           if (err){
-            return callback(err, null);
+            return callback(err, null, null);
           }
-          files = resolvePaths(rootDir, files);
+
           maxDepth = maxDepth === undefined ? maxDepth : maxDepth - 1;
-          asyncCrawler(files, fsWorker, maxDepth, (err, results) => {
+
+          asyncCrawler(resolvePaths(rootPath, files), fsWorker, maxDepth, (err, files) => {
             if (err){
               return callback(err, null);
             }
-            return callback(null, results);
+            return callback(null, files);
           });
         })
       }
-      return callback(null, rootDir);
+      return callback(null, rootPath);
     });
   };
 
   asyncCrawler([root], fsWorker, options.maxDepth, finalCallback);
 };
+
+const options = {
+  match: '**.js',
+  maxDepth: 2,
+  ignorePaths: [/node_modules/],
+  predicate: (filePath, callback) => {
+    fs.access(filePath, fs.W_OK, err => {
+      if (err) return callback(null, false);
+      return callback(null, true);
+    })
+  }
+}
+
+fsCrawlerSerial('/Users/ryanvazquez/Codesmith', options, (err, results) => {
+  if (err) return console.error({err});
+  console.log({results});
+});
 
 module.exports = fsCrawlerSerial;
