@@ -168,21 +168,4 @@ function fsCrawlerSerial(root, options, finalCallback){
   asyncCrawler([root], fsWorker, options.maxDepth, finalCallback);
 };
 
-const options = {
-  match: '**.js',
-  maxDepth: 2,
-  ignorePaths: [/node_modules/],
-  predicate: (filePath, callback) => {
-    fs.access(filePath, fs.W_OK, err => {
-      if (err) return callback(null, false);
-      return callback(null, true);
-    })
-  }
-}
-
-fsCrawlerSerial('/Users/ryanvazquez/Codesmith', options, (err, results) => {
-  if (err) return console.error({err});
-  console.log({results});
-});
-
 module.exports = fsCrawlerSerial;
