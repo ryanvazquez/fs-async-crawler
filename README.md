@@ -89,7 +89,7 @@ crawler('path/to/dir', options, (err, files) => {
 );
 ```
 
-### Get only files matching an extension that a Node process has permission to edit;
+### Use a custom matcher
 
 ```js
 const crawler = require('fs-crawler').serial;
