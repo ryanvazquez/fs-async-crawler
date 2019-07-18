@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/ryanvazquez/fs-crawler.svg?branch=master)](https://travis-ci.org/ryanvazquez/fs-crawler)
 
 # fs-crawler
-A collection of configurable file system crawlers. Serial, Parallel, and Queued crawlers available
+A collection of configurable file system crawlers.
 
 ## **Install**
 ```sh
