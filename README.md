@@ -109,7 +109,9 @@ crawler.forEach((file, done) => {
 
 ## fsCrawler.prototype.map
 
-### Crawls the directory, performs an async operation on each file and collects the result in an array. The results are not guaranteed to be in their original order.
+### Crawls the directory, performs an async operation on each file and collects the result in an array. 
+
+Results are not guaranteed to be in their original order.
 
 > crawler.map(iteratee, finalCallback);
 
