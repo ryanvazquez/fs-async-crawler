@@ -17,7 +17,7 @@ A collection of configurable file system crawlers.
   | :------- | :--- | :---------- | :------ |
   | `path` | `string` | **Absolute** path of the directory to crawl | `true`|
   | `options` | `object` | [See Options](#Options) | `false` |
-  | `callback`| `function` | The callback function will be fired after the crawler has completed crawling the directory tree or upon encountering an error. Provides `err` and `array` of files as arguments. | `true`|
+  | `callback`| `function` | The callback function will be fired after the crawler has completed crawling the directory tree or upon encountering an error. Provides `err` and `array` of absolute file paths as arguments. | `true`|
   
   ### **Options**
   | Property | Type | Description | Default 
@@ -25,25 +25,43 @@ A collection of configurable file system crawlers.
   | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null`
   | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`
   | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `[*]` 
-  | `predicate` | `function` | Function to test if file path should be evaluated. Must return a `Boolean`. Fires after `ignorePaths` and before `match`. [See Configuration](#Configuration) | `null` |
-
-### **Configuration**
-  | ignorePaths | match | predicate | result |
-  | :--- |:--- | :---| :--- |
-  | `true` | `true` | `true` | Crawler will ignore all ignoredPaths. Predicate will only evaluate matched files.
-  | `false` | `true` | `true` | Predicate will only evalutate matched files.
-  | `false` | `false` | `true` | Predicate will evaluate any file or directory.
-  | `true` | `false` | `true` | Crawler will ignore all ignoredPaths. Predicate will evaluate any non-ignored file or directory.
+  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` |
 
     
-# **Usage**
-### Get all files within a directory.
+# **API**
+## fsCrawler.prototype.all
 
-> Note: Ignores `node_modules` by default.
+### Crawls entire directory starting from the root. Returns an array of absolute filePaths. Ignores node_modules by default
+
+> crawler.all(finalCallback)
+
+quick setup: 
 ```js
-const crawler = require('fs-crawler').serial;
+const fsCrawler = require('fs-crawler');
+const crawler = new fsCrawler({ root: 'path/to/dir' });
 
-crawler('path/to/dir', (err, files) => {
+// gets all files within root
+crawler.all((err, files) => {
+  if (err){
+    return handleError(err);
+  }
+  return doSomething(files);
+});
+```
+
+with options:
+
+```js
+const fsCrawler = require('fs-crawler');
+const config = {
+  root: 'path/to/dir',
+  ignorePaths: [/node_modules/, /__tests__/],
+  match: ['**.js']
+}
+const crawler = new fsCrawler(config);
+
+// get all JS files within root
+crawler.all((err, files) => {
   if (err){
     return handleError(err);
   }
@@ -51,59 +69,69 @@ crawler('path/to/dir', (err, files) => {
 });
 ```
        
-### Get only files matching an extension in a root directory
+## fsCrawler.prototype.forEach
+
+### Crawls the directory and performs an async operation on each file.
+
+> crawler.forEach(iteratee, finalCallback);
 
 ```js
-const crawler = require('fs-crawler').serial;
-
-// locate all JavaScript and JSX files in given directory
-const options = {
+const fsCrawler = require('fs-crawler');
+const config = {
+  root: 'path/to/log-files',
   ignorePaths: [/node_modules/],
-  match: [ "**.(js|jsx)" ], 
-};
+  match: ['**.log']
+}
+const crawler = new fsCrawler(config);
 
-crawler('path/to/dir', options, (err, files) => {
+// get all log files within root and delete them
+crawler.forEach((file, done) => {
+
+  deleteFile(file, (err, result) => {
+    if (err){
+      return done(err);
+    }
+    return done(null);
+  })
+
+}, (err) => {
   if (err){
-    return handleError(err);
+    console.log('Something went wrong');
+  } else {
+    console.log('Everything ok!');
   }
-  return doSomethingElse(files);
-);
+});
 ```
 
-### Get only files matching an extension in a root directory
+## fsCrawler.prototype.map
+
+### Crawls the directory, performs an async operation on each file and collects each result in an array
+
+> crawler.map(iteratee, finalCallback);
 
 ```js
-const crawler = require('fs-crawler').serial;
+const fsCrawler = require('fs-crawler');
+const config = {
+  root: 'path/to/dir',
+  match: ['**.txt']
+}
+const crawler = new fsCrawler(config);
 
-// locate all JavaScript and JSX files in given directory
-const options = {
-  ignorePaths: [/node_modules/],
-  match: [ "**.(js|jsx)" ], 
-};
+// find all txt files within root and create an array of their contents
+crawler.map((file, done) => {
 
-crawler('path/to/dir', options, (err, files) => {
+  getContentsOfTxtFile(file, (err, content) => {
+    if (err){
+      return done(err, null);
+    }
+    return done(null, content);
+  })
+
+}, (err, contents) => {
   if (err){
-    return handleError(err);
+    console.log('The first err from ');
+  } else {
+    console.log('')
   }
-  return callThePresident(files);
-);
-```
-
-### Use a custom matcher
-
-```js
-const crawler = require('fs-crawler').serial;
-
-// locate all JSON files inside given directory
-const options = {
-  ignorePaths: [/node_modules/],
-  predicate: path => /\.json$/.test(filePath)
-};
-
-crawler('path/to/dir', options, (err, files) => {
-  if (err){
-    return handleError(err);
-  }
-  return processToBinaryAndReadToMomOverThePhone(files);
-);
+});
 ```
