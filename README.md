@@ -149,9 +149,9 @@ crawler.map((file, done) => {
 
 Note: Reduce requires the accumulated result of each previous operation to be passed to the current operation. Therefore, async tasks must be executed serially, rather than in parallel (the default behavior of fsCrawler). This may have an adverse impact on performance.
 
-> crawler.reduce(predicate, initialValue, finalCallback);
+> crawler.reduce(iteratee, initialValue, finalCallback);
 
-> crawler.reduce(predicate, finalCallback);
+> crawler.reduce(iteratee, finalCallback);
 
 initialValue is optional. Mirrors the behavior of [Array.prototype.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce).
 
