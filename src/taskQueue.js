@@ -1,35 +1,35 @@
-const { EventEmitter } = require('events');
-
-class TaskQueue extends EventEmitter {
+class TaskQueue {
   constructor(config){
-    super();
     this.concurrency = config.concurrency || process.env.UV_THREADPOOL_SIZE;
     this.running = 0;
     this.queue = [];
-    this.draining = false;
-
     this.done = this.done.bind(this);
-
-    this.addListener('error', this.drain);
   }
 
-  _nextTick(error, result, event){
-    if (typeof event === 'function'){
-      const callback = event;
-      return process.nextTick(() => callback(error, result))
+  onError(err, callback){
+    this.drain();
+    callback(err, null);
+  }
+
+  nextTickError(error, callback){
+    return process.nextTick(() => this.onError(error, callback));
+  }
+
+  nextTickResult(result, callback){
+    return process.nextTick(() => callback(null, result));
+  }
+
+  setConcurrency(n){
+    if (n < 1){
+      throw new TypeError('Invalid value. Concurrency must be set to a value greater than zero');
     }
-    return process.nextTick(() => this.emit(event, error, result));
-  }
-
-  _setConcurrency(n){
     this.concurrency = n;
   }
 
-  drain(err){
+  drain(){
     while (this.queue.length){
       this.queue.pop();
     }
-    this.emit('drained', err);
   }
 
   push(task){
