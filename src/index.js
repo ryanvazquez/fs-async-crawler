@@ -6,26 +6,23 @@ const TaskQueue = require('./taskQueue');
 const once = require('../util/once');
 
 class fsCrawler extends TaskQueue {
-  constructor(options){
+  constructor(options) {
     super(options);
-    if (options.root === undefined){
-      throw TypeError('Invalid configuration. Root path is required.')
+    if (options.root === undefined) {
+      throw TypeError('Invalid configuration. Root path is required.');
     }
-    
-    this.match = options.match || [];
-    this.ignorePaths = options.ignorePaths || [ /node_modules/ ];
-    this.maxDepth = options.maxDepth || null;
     this.root = options.root;
-    
-    this.addListener('drained', err => this.onDrained(err));
-    this.addListener('finished', (res) => this.onFinished(res));
+    this.match = options.match || [];
+    this.ignorePaths = options.ignorePaths || [/node_modules/];
+    this.maxDepth = options.maxDepth;
+    this.strict = options.strict || false;
   }
-  
-  _validateDirectory(dir){
-    if (this.ignorePaths && this.ignorePaths.length){
-      for (let i = 0; i < this.ignorePaths.length; i += 1){
+
+  validateDirectory(dir) {
+    if (this.ignorePaths && this.ignorePaths.length) {
+      for (let i = 0; i < this.ignorePaths.length; i += 1) {
         const rgx = this.ignorePaths[i];
-        if (rgx.test(dir)){
+        if (rgx.test(dir)) {
           return false;
         }
       }
@@ -33,290 +30,280 @@ class fsCrawler extends TaskQueue {
     return true;
   }
 
-  _crawl(root, depth, callback){
-    
-    if (depth !== undefined && depth < 0){
-      return this._nextTick(null, [], callback)
+  crawl(root, depth, onFinish) {
+    const callback = once(onFinish);
+
+    if (depth !== undefined && depth < 0) {
+      return this.nextTickResult([], callback);
     }
 
     fs.stat(root, (err, stats) => {
-      if (err){
-        return this._nextTick(err, null, callback);
+      if (err) {
+        if (err.code === 'EACCES') {
+          if (this.strict) {
+            return this.nextTickError(err, callback);
+          }
+          return callback(null, []);
+        }
+        return this.nextTickError(err, callback);
       }
-      
-      if (stats && !stats.isDirectory()){
+
+      if (stats && !stats.isDirectory()) {
         return callback(null, root);
       }
-      
-      if (!this._validateDirectory(root)){
+
+      if (!this.validateDirectory(root)) {
         return callback(null, []);
       }
-  
-      fs.readdir(root, (err, files) => {
-        if (err){
-          return this._nextTick(err, null, callback);
-        }
-        
-        if (files.length === 0){
-          return process.nextTick(() => callback(null, root));
-        }
-  
-        let completed = 0, hasErrors = false, results = [];
-  
-        files.forEach(enqueueTask.bind(this));
 
-        this.done();
-  
-        function enqueueTask(file){
+      fs.readdir(root, (readdirErr, files) => {
+        if (readdirErr) {
+          return this.nextTickError(err, callback);
+        }
+
+        if (files.length === 0) {
+          return process.nextTickResult(root, callback);
+        }
+
+        let completed = 0;
+        let hasErrors = false;
+        let results = [];
+
+        function enqueueTask(file) {
           const filePath = path.join(root, file);
-
-          this.push(task.bind(this));
-  
-          function task(done){
-            this._crawl(filePath, depth - 1, (err, result) => {
-              if (err) {
+          function task(done) {
+            this.crawl(filePath, depth - 1, (pathErr, result) => {
+              if (pathErr) {
                 hasErrors = true;
-                return this._nextTick(err, null, callback);
+                return this.nextTickError(err, callback);
               }
-            
-              if (this.match && this.match.length){
-                result = micromatch(result, this.match);
+
+              let res = result;
+
+              if (this.match && this.match.length) {
+                res = micromatch(res, this.match);
               }
-  
-              results = results.concat(result);
-              
-              if (++ completed === files.length && !hasErrors){
+
+              results = results.concat(res);
+              completed += 1;
+
+              if (completed === files.length && !hasErrors) {
                 return callback(null, results);
               }
-  
+
               done();
-              
             });
           }
+          this.push(task.bind(this));
         }
+        files.forEach(enqueueTask.bind(this));
+        this.done();
       });
     });
   }
 
+  all(onFinish) {
+    const finished = once(onFinish);
 
-  all(callback){
-
-    callback = once(callback);
-
-    this._crawl(this.root, this.maxDepth, callback);
+    this.crawl(this.root, this.maxDepth, finished);
   }
 
-  forEach(iteratee, finished){
+  forEach(iteratee, onFinish) {
+    const finished = once(onFinish);
 
-    finished = once(finished);
-
-    this.onDrained = err => finished(err);
-    this.onFinished = err => finished(null);
-
-    this._crawl(this.root, this.maxDepth, (err, files) => {
-      if (err){
-        return this._nextTick(err, null, 'error');
+    this.crawl(this.root, this.maxDepth, (err, files) => {
+      if (err) {
+        return this.nextTickError(err, finished);
       }
-      
+
       let completed = 0;
-      files.forEach(enqueueTask.bind(this));
 
-      function enqueueTask(file){
-        this.push(task.bind(this));
-
-        function task(done){
+      function enqueueTask(file) {
+        function task(done) {
           try {
-            iteratee(file, (err) => {
-              if (err){
-                return this._nextTick(err, null, 'error');
+            iteratee(file, (cbErr) => {
+              if (cbErr) {
+                return this.nextTickError(err, finished);
               }
 
-              if (++ completed === files.length){
-                return this.emit('finished', null, results);
+              completed += 1;
+
+              if (completed === files.length) {
+                finished(null);
               }
 
               done();
-
-            })
-          } catch (err) {
-            return this._nextTick(err, null, 'error');
+            });
+          } catch (taskErr) {
+            return this.nextTickError(taskErr, finished);
           }
         }
+        this.push(task.bind(this));
       }
 
-    })
+      files.forEach(enqueueTask.bind(this));
+    });
   }
 
-  map(iteratee, finished){
+  map(iteratee, onFinish) {
+    const finished = once(onFinish);
 
-    finished = once(finished);
-
-    this.onDrained = err => finished(err, null);
-    this.onFinished = results => finished(null, results);
-
-    this._crawl(this.root, this.maxDepth, (err, files) => {
-      if (err){
-        return this._nextTick(err, null, 'error');
+    this.crawl(this.root, this.maxDepth, (err, files) => {
+      if (err) {
+        return this.nextTickError(err, finished);
       }
 
       const results = [];
       let completed = 0;
 
-      files.forEach(enqueueTask.bind(this));
-
-      function enqueueTask(file, index){
-        this.push(task.bind(this));
-
-        function task(done){
+      function enqueueTask(file, index) {
+        function task(done) {
           try {
-            iteratee(file, (err, result) => {
-              if (err) {
-                return this._nextTick(err, null, 'error');
+            iteratee(file, (cbErr, result) => {
+              if (cbErr) {
+                return this.nextTickError(cbErr, finished);
               }
-  
+
               results[index] = result;
-  
-              if (++ completed === files.length){
-                this.emit('finished', null, results);
+              completed += 1;
+
+              if (completed === files.length) {
+                return finished(null, results);
               }
 
               done();
-  
             });
-          } catch (err) {
-            return this._nextTick(err, null, 'error');
+          } catch (taskErr) {
+            return this.nextTickError(taskErr, finished);
           }
         }
+        this.push(task.bind(this));
       }
-    });
 
+      files.forEach(enqueueTask.bind(this));
+    });
   }
 
-  filter(predicate, finished){
+  filter(predicate, onFinish) {
+    const finished = once(onFinish);
 
-    finished = once(finished);
-
-    this.onDrained = err => finished(err, null);
-    this.onFinished = results => finished(null, results);
-
-    this._crawl(this.root, this.maxDepth, (err, files) => {
-      if (err){
-        this._nextTick(err, null, 'error');
+    this.crawl(this.root, this.maxDepth, (err, files) => {
+      if (err) {
+        return this.nextTickError(err, finished);
       }
 
-      const filtered = [];
+      const results = [];
       let completed = 0;
 
-      files.forEach(enqueueTask.bind(this));
-
-      function enqueueTask(file, index){
-        this.push(task.bind(this));
-
-        function task(done){
+      function enqueueTask(file) {
+        function task(done) {
           try {
-            predicate(file, (err, result) => {
-              if (err){
-                this._nextTick(err, null, 'error');
+            predicate(file, (cbErr, result) => {
+              if (cbErr) {
+                this.nextTickError(cbErr, finished);
               }
 
-              if (result){
-                filtered[index] = file;
+              if (result) {
+                results.push(file);
               }
-              
-              if (++ completed === files.length){
-                this.emit('finished', filtered);
+
+              completed += 1;
+
+              if (completed === files.length) {
+                finished(null, results);
               }
-  
+
               done();
-  
             });
-          } catch (err) {
-            this._nextTick(err, null, 'error');
+          } catch (taskErr) {
+            this.nextTickError(taskErr, finished);
           }
         }
+        this.push(task.bind(this));
       }
+
+      files.forEach(enqueueTask.bind(this));
     });
   }
 
-  reduce(reducer, initialValue, finished){
+  reduce(reducer, initVal, onFinish) {
+    let initialValue = initVal;
+    let finished = onFinish;
 
-    if (typeof initialValue === 'function' && finished === undefined){
+    if (typeof initialValue === 'function' && finished === undefined) {
       finished = initialValue;
       initialValue = undefined;
     }
 
     finished = once(finished);
 
-    this.onDrained = err => finished(err, null);
-    this.onFinished = results => finished(null, results);
-
-    this._crawl(this.root, this.maxDepth, (err, files) => {
-      if (err){
-        this._nextTick(err, null, 'error');
+    this.crawl(this.root, this.maxDepth, (err, files) => {
+      if (err) {
+        this.nextTickError(err, finished);
       }
 
-      let completed = 0, accumulator = initialValue;
+      let completed = 0;
+      let accumulator = initialValue;
+      let prevConcurrency = this.concurrency;
 
-      this._setConcurrency(1);
+      this.setConcurrency(1);
 
-      if (accumulator === undefined){
-        if (files.length === 0){
-          throw TypeError('Reduce of empty array with no initial value');
-        }
-
-        enqueueTask(files[0]);
-
-      } else {
-        files.forEach(enqueueTask.bind(this));
-      }
-
-      function enqueueTask(file){
-        this.push(task.bind(this));
-
-        function task(done){
+      function enqueueTask(file) {
+        function task(done) {
           try {
-            if (accumulator === undefined){
-              reducer(file, (err, result) => {
-                if (err){
-                  this._nextTick(err, null, 'error');
+            if (accumulator === undefined) {
+              reducer(file, (cbErr, result) => {
+                if (cbErr) {
+                  this.nextTickError(cbErr, finished);
                 }
 
                 accumulator = result;
+                completed += 1;
 
-                if (++ completed === files.length){
-                  this.emit('finished', accumulator);
+                if (completed === files.length) {
+                  this.setConcurrency(prevConcurrency);
+                  finished(null, accumulator);
                 } else {
-                  for (let i = 1; i < files.length; i += 1){
+                  for (let i = 1; i < files.length; i += 1) {
                     enqueueTask(files[i]);
                   }
                 }
 
                 done();
-    
               });
             } else {
-              reducer(accumulator, file, (err, result) => {
-                if (err){
-                  this._nextTick(err, null, 'error');
+              reducer(accumulator, file, (cbErr, result) => {
+                if (cbErr) {
+                  this.nextTickError(cbErr, finished);
                 }
-                
-                accumulator = result;
 
-                if (++ completed === files.length){
-                  this.emit('finished', accumulator);
+                accumulator = result;
+                completed += 1;
+
+                if (completed === files.length) {
+                  finished(null, accumulator);
                 }
 
                 done();
-    
               });
             }
-          } catch (err) {
-            this._nextTick(err, null, 'error');
+          } catch (taskErr) {
+            this.nextTickError(taskErr, finished);
           }
         }
+        this.push(task.bind(this));
+      }
+
+      if (accumulator === undefined) {
+        if (files.length === 0) {
+          throw TypeError('Reduce of empty array with no initial value');
+        }
+        enqueueTask(files[0]);
+      } else {
+        files.forEach(enqueueTask.bind(this));
       }
     });
   }
 }
 
-module.exports = fsCrawler
+module.exports = fsCrawler;
