@@ -8,7 +8,7 @@ A collection of configurable file system crawlers.
   npm install fs-crawler
 ```
 
-# fs-crawler.serial
+# fs-crawler
   ### **Description**
   Collects all files of a given directory into a flattened array. Traverses root directory **serially**. Evaluates one branch at a time until all files have been collected or until maxDepth is reached. Terminates upon encountering an error. Signficantly slower than  **fs-crawler.parallel** or **fs-crawler.queue**.
 
@@ -31,7 +31,7 @@ A collection of configurable file system crawlers.
 # **API**
 ## fsCrawler.prototype.all
 
-### Crawls entire directory starting from the root. Returns an array of absolute filePaths. Ignores node_modules by default
+### Crawls entire directory starting from the root. Returns an array of absolute filePaths.
 
 > crawler.all(finalCallback)
 
@@ -43,9 +43,10 @@ const crawler = new fsCrawler({ root: 'path/to/dir' });
 // gets all files within root
 crawler.all((err, files) => {
   if (err){
-    return handleError(err);
+    console.log('There was an error! ' + err);
+  } else {
+    console.log(files);
   }
-  return doSomething(files);
 });
 ```
 
@@ -63,15 +64,18 @@ const crawler = new fsCrawler(config);
 // get all JS files within root
 crawler.all((err, files) => {
   if (err){
-    return handleError(err);
+    console.log('There was an error! ' + err);
+  } else {
+    console.log(files);
   }
-  return doSomething(files);
 });
 ```
        
 ## fsCrawler.prototype.forEach
 
-### Crawls the directory and performs an async operation on each file.
+#### Crawls the directory and performs an async operation on each file.
+
+Like Array.prototype.forEach, fsCrawler.prototype.forEach executes the async function but does not return/collect the result. The `done` callback accepts an error as its only argument.
 
 > crawler.forEach(iteratee, finalCallback);
 
@@ -105,7 +109,7 @@ crawler.forEach((file, done) => {
 
 ## fsCrawler.prototype.map
 
-### Crawls the directory, performs an async operation on each file and collects each result in an array
+### Crawls the directory, performs an async operation on each file and collects the result in an array. The results are not guaranteed to be in their original order.
 
 > crawler.map(iteratee, finalCallback);
 
@@ -129,9 +133,52 @@ crawler.map((file, done) => {
 
 }, (err, contents) => {
   if (err){
-    console.log('The first err from ');
+    console.log('There was an error!' + err);
   } else {
-    console.log('')
+    console.log(contents);
+  }
+});
+```
+
+
+## fsCrawler.prototype.reduce
+
+### Crawls the directory, performs an async operation on each file and returns an accumulated result.
+
+Note: Reduce requires the accumulated result of each previous operation to be passed to the current operation. Therefore, async tasks must be executed serially, rather than in parallel (the default behavior of fsCrawler). This may have an adverse impact on performance.
+
+> crawler.reduce(predicate, initialValue, finalCallback);
+> crawler.reduce(predicate, finalCallback);
+
+initialValue is optional. Mirrors the behavior of [Array.prototype.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce).
+
+If provided, .reduce will start iteration at the first task with the initialValue passed as the accumulator.
+
+If not provided, reduce will start iteration at the second task with the result of the first async task passed as the accumulator.
+
+```js
+const fsCrawler = require('fs-crawler');
+const config = {
+  root: 'path/to/dir',
+  match: ['**.txt']
+};
+const crawler = new fsCrawler(config);
+const initialValue = 0;
+
+crawler.reduce((acc, file, done) => {
+
+  readFileContents(file, (err, content) => {
+    if (err){
+      return done(err, null);
+    }
+    return done(null, acc + content.length);
+  })
+
+}, initialValue, (err, contentLength) => {
+  if (err){
+    console.log('An error occured!' + err);
+  } else {
+    console.log('Content length of all files' + contentLength);
   }
 });
 ```
