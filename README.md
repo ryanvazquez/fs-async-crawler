@@ -9,13 +9,13 @@
 ```
   
   ### **Config**
-  | Property | Type | Description | Default 
-  | :------- | :--- | :---------- | :------ |
-  | `root` | `string` | **Absolute** path of the directory to crawl | `true`|
-  | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null`
-  | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`
-  | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `[*]` 
-  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` |
+  | Property | Type | Description | Default | Required |
+  | :------- | :--- | :---------- | :------ | :------ |
+  | `root` | `string` | **Absolute** path of the directory to crawl | `null`| true
+  | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null` | false
+  | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`| false
+  | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `null` | false
+  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` | `false`
 
     
 # **API**
@@ -151,7 +151,7 @@ const config = {
 const crawler = new Crawler(config);
 const initialValue = 0;
 
-crawler.reduce((acc, file, done) => {
+crawler.reduce(initialValue, (acc, file, done) => {
 
   readFileContents(file, (err, content) => {
     if (err){
@@ -160,7 +160,7 @@ crawler.reduce((acc, file, done) => {
     return done(null, acc + content.length);
   })
 
-}, initialValue, (err, contentLength) => {
+}, (err, contentLength) => {
   if (err){
     console.log('An error occured!' + err);
   } else {
