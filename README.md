@@ -1,15 +1,12 @@
 [![Build Status](https://travis-ci.org/ryanvazquez/fs-async-crawler.svg?branch=master)](https://travis-ci.org/ryanvazquez/fs-async-crawler)
 
 # fs-async-crawler
-File sytem crawler and async API for Node.js
+  Crawls a file directory for a given root path and exposes an API for asynchronous operations on the result files.
 
 ## **Install**
 ```sh
   npm install fs-async-crawler
 ```
-
-# fs-async-crawler
-  Crawls a file directory for a given root path and exposes an API for asynchronous operations on the result files.
   
   ### **Config**
   | Property | Type | Description | Default 
