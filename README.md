@@ -1,16 +1,16 @@
-[![Build Status](https://travis-ci.org/ryanvazquez/fs-crawler.svg?branch=master)](https://travis-ci.org/ryanvazquez/fs-crawler)
+[![Build Status](https://travis-ci.org/ryanvazquez/fs-async-crawler.svg?branch=master)](https://travis-ci.org/ryanvazquez/fs-async-crawler)
 
-# fs-crawler
+# fs-async-crawler
 A collection of configurable file system crawlers.
 
 ## **Install**
 ```sh
-  npm install fs-crawler
+  npm install fs-async-crawler
 ```
 
-# fs-crawler
+# fs-async-crawler
   ### **Description**
-  Collects all files of a given directory into a flattened array. Traverses root directory **serially**. Evaluates one branch at a time until all files have been collected or until maxDepth is reached. Terminates upon encountering an error. Signficantly slower than  **fs-crawler.parallel** or **fs-crawler.queue**.
+  Collects all files of a given directory into a flattened array. Traverses root directory **serially**. Evaluates one branch at a time until all files have been collected or until maxDepth is reached. Terminates upon encountering an error. Signficantly slower than  **fs-async-crawler.parallel** or **fs-async-crawler.queue**.
 
   ### **Params**
   | Param | Type | Description | Required |
@@ -29,7 +29,7 @@ A collection of configurable file system crawlers.
 
     
 # **API**
-## fsCrawler.prototype.all
+## Crawler.prototype.all
 
 ### Crawls entire directory starting from the root. Returns an array of absolute filePaths.
 
@@ -37,8 +37,8 @@ A collection of configurable file system crawlers.
 
 quick setup: 
 ```js
-const fsCrawler = require('fs-crawler');
-const crawler = new fsCrawler({ root: 'path/to/dir' });
+const Crawler = require('fs-async-crawler');
+const crawler = new Crawler({ root: 'Users/path/to/dir' });
 
 // gets all files within root
 crawler.all((err, files) => {
@@ -53,13 +53,13 @@ crawler.all((err, files) => {
 with options:
 
 ```js
-const fsCrawler = require('fs-crawler');
+const Crawler = require('fs-async-crawler');
 const config = {
-  root: 'path/to/dir',
+  root: 'Users/path/to/dir',
   ignorePaths: [/node_modules/, /__tests__/],
   match: ['**.js']
 }
-const crawler = new fsCrawler(config);
+const crawler = new Crawler(config);
 
 // get all JS files within root
 crawler.all((err, files) => {
@@ -71,22 +71,22 @@ crawler.all((err, files) => {
 });
 ```
        
-## fsCrawler.prototype.forEach
+## Crawler.prototype.forEach
 
 #### Crawls the directory and performs an async operation on each file.
 
-Like Array.prototype.forEach, fsCrawler.prototype.forEach executes the async function but does not return/collect the result. The `done` callback accepts an error as its only argument.
+Like Array.prototype.forEach, Crawler.prototype.forEach executes the async function but does not return/collect the result. The `done` callback accepts an error as its only argument.
 
 > crawler.forEach(iteratee, finalCallback);
 
 ```js
-const fsCrawler = require('fs-crawler');
+const Crawler = require('fs-async-crawler');
 const config = {
-  root: 'path/to/log-files',
+  root: 'Users/path/to/log-files',
   ignorePaths: [/node_modules/],
   match: ['**.log']
 }
-const crawler = new fsCrawler(config);
+const crawler = new Crawler(config);
 
 // get all log files within root and delete them
 crawler.forEach((file, done) => {
@@ -107,7 +107,7 @@ crawler.forEach((file, done) => {
 });
 ```
 
-## fsCrawler.prototype.map
+## Crawler.prototype.map
 
 ### Crawls the directory, performs an async operation on each file and collects the result in an array. 
 
@@ -116,12 +116,12 @@ Results are not guaranteed to be in their original order.
 > crawler.map(iteratee, finalCallback);
 
 ```js
-const fsCrawler = require('fs-crawler');
+const Crawler = require('fs-async-crawler');
 const config = {
-  root: 'path/to/dir',
+  root: 'Users/path/to/dir',
   match: ['**.txt']
 }
-const crawler = new fsCrawler(config);
+const crawler = new Crawler(config);
 
 // find all txt files within root and create an array of their contents
 crawler.map((file, done) => {
@@ -143,29 +143,22 @@ crawler.map((file, done) => {
 ```
 
 
-## fsCrawler.prototype.reduce
+## Crawler.prototype.reduce
 
 ### Crawls the directory, performs an async operation on each file and returns an accumulated result.
 
-Note: Reduce requires the accumulated result of each previous operation to be passed to the current operation. Therefore, async tasks must be executed serially, rather than in parallel (the default behavior of fsCrawler). This may have an adverse impact on performance.
+Note: Reduce requires the accumulated result of each previous operation to be passed to the current operation. Therefore, async tasks must be executed serially, rather than in parallel (the default behavior of Crawler). This may have an adverse impact on performance.
 
-> crawler.reduce(iteratee, initialValue, finalCallback);
+> crawler.reduce(initialValue, iteratee, finalCallback);
 
-> crawler.reduce(iteratee, finalCallback);
-
-initialValue is optional. Mirrors the behavior of [Array.prototype.reduce](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce).
-
-If provided, .reduce will start iteration at the first task with the initialValue passed as the accumulator.
-
-If not provided, reduce will start iteration at the second task with the result of the first async task passed as the accumulator.
 
 ```js
-const fsCrawler = require('fs-crawler');
+const Crawler = require('fs-async-crawler');
 const config = {
-  root: 'path/to/dir',
+  root: 'Users/path/to/dir',
   match: ['**.txt']
 };
-const crawler = new fsCrawler(config);
+const crawler = new Crawler(config);
 const initialValue = 0;
 
 crawler.reduce((acc, file, done) => {
