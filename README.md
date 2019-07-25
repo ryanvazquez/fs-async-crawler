@@ -9,19 +9,12 @@ A collection of configurable file system crawlers.
 ```
 
 # fs-async-crawler
-  ### **Description**
-  Collects all files of a given directory into a flattened array. Traverses root directory **serially**. Evaluates one branch at a time until all files have been collected or until maxDepth is reached. Terminates upon encountering an error. Signficantly slower than  **fs-async-crawler.parallel** or **fs-async-crawler.queue**.
-
-  ### **Params**
-  | Param | Type | Description | Required |
-  | :------- | :--- | :---------- | :------ |
-  | `path` | `string` | **Absolute** path of the directory to crawl | `true`|
-  | `options` | `object` | [See Options](#Options) | `false` |
-  | `callback`| `function` | The callback function will be fired after the crawler has completed crawling the directory tree or upon encountering an error. Provides `err` and `array` of absolute file paths as arguments. | `true`|
+  Crawls a file directory for a given root path and exposes an API for asynchronous operations on the result files.
   
-  ### **Options**
+  ### **Config**
   | Property | Type | Description | Default 
   | :------- | :--- | :---------- | :------ |
+  | `root` | `string` | **Absolute** path of the directory to crawl | `true`|
   | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null`
   | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`
   | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `[*]` 
@@ -38,7 +31,6 @@ A collection of configurable file system crawlers.
 quick setup: 
 ```js
 const Crawler = require('fs-async-crawler');
-const crawler = new Crawler({ root: 'Users/path/to/dir' });
 
 // gets all files within root
 crawler.all((err, files) => {
