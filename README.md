@@ -31,7 +31,7 @@ const Crawler = require('fs-async-crawler');
 const crawler = new Crawler({ root: 'Users/path/to/files' });
 
 // gets all files within root
-crawler.all((err, files) => {
+crawler.crawl((err, files) => {
   if (err){
     console.log('There was an error! ' + err);
   } else {
@@ -52,7 +52,7 @@ const config = {
 const crawler = new Crawler(config);
 
 // get all JS files within root
-crawler.all((err, files) => {
+crawler.crawl((err, files) => {
   if (err){
     console.log('There was an error! ' + err);
   } else {
