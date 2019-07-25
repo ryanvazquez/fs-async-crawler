@@ -19,7 +19,7 @@
 
     
 # **API**
-## Crawler.prototype.all
+## Crawler.prototype.crawl
 
 ### Crawls entire directory starting from the root. Returns an array of absolute filePaths.
 
