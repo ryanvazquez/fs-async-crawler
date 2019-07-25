@@ -1,31 +1,21 @@
 [![Build Status](https://travis-ci.org/ryanvazquez/fs-async-crawler.svg?branch=master)](https://travis-ci.org/ryanvazquez/fs-async-crawler)
 
 # fs-async-crawler
-A collection of configurable file system crawlers.
+  File system crawler and async API
 
 ## **Install**
 ```sh
   npm install fs-async-crawler
 ```
-
-# fs-async-crawler
-  ### **Description**
-  Collects all files of a given directory into a flattened array. Traverses root directory **serially**. Evaluates one branch at a time until all files have been collected or until maxDepth is reached. Terminates upon encountering an error. Signficantly slower than  **fs-async-crawler.parallel** or **fs-async-crawler.queue**.
-
-  ### **Params**
-  | Param | Type | Description | Required |
-  | :------- | :--- | :---------- | :------ |
-  | `path` | `string` | **Absolute** path of the directory to crawl | `true`|
-  | `options` | `object` | [See Options](#Options) | `false` |
-  | `callback`| `function` | The callback function will be fired after the crawler has completed crawling the directory tree or upon encountering an error. Provides `err` and `array` of absolute file paths as arguments. | `true`|
   
-  ### **Options**
-  | Property | Type | Description | Default 
-  | :------- | :--- | :---------- | :------ |
-  | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null`
-  | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`
-  | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `[*]` 
-  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` |
+  ### **Config**
+  | Property | Type | Description | Default | Required |
+  | :------- | :--- | :---------- | :------ | :------ |
+  | `root` | `string` | **Absolute** path of the directory to crawl | `null`| true
+  | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null` | false
+  | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`| false
+  | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `null` | false
+  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` | `false`
 
     
 # **API**
@@ -38,7 +28,7 @@ A collection of configurable file system crawlers.
 quick setup: 
 ```js
 const Crawler = require('fs-async-crawler');
-const crawler = new Crawler({ root: 'Users/path/to/dir' });
+const crawler = new Crawler({ root: 'Users/path/to/files' });
 
 // gets all files within root
 crawler.all((err, files) => {
@@ -161,7 +151,7 @@ const config = {
 const crawler = new Crawler(config);
 const initialValue = 0;
 
-crawler.reduce((acc, file, done) => {
+crawler.reduce(initialValue, (acc, file, done) => {
 
   readFileContents(file, (err, content) => {
     if (err){
@@ -170,7 +160,7 @@ crawler.reduce((acc, file, done) => {
     return done(null, acc + content.length);
   })
 
-}, initialValue, (err, contentLength) => {
+}, (err, contentLength) => {
   if (err){
     console.log('An error occured!' + err);
   } else {
