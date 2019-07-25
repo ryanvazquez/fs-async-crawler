@@ -31,6 +31,7 @@ A collection of configurable file system crawlers.
 quick setup: 
 ```js
 const Crawler = require('fs-async-crawler');
+const crawler = new Crawler({ root: 'Users/path/to/files' });
 
 // gets all files within root
 crawler.all((err, files) => {
