@@ -1,6 +1,6 @@
 {
   "name": "fs-async-crawler",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Asynchronous options for crawling file system",
   "main": "index.js",
   "repository": {
