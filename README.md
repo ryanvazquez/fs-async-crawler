@@ -21,9 +21,9 @@
 # **API**
 ## Crawler.prototype.crawl
 
-### Crawls entire directory starting from the root. Returns an array of absolute filePaths.
+### Crawls entire directory starting from the root. Returns an array of absolute file paths.
 
-> crawler.all(finalCallback)
+> crawler.crawl(finalCallback)
 
 quick setup: 
 ```js
