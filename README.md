@@ -15,7 +15,7 @@
   | `maxDepth` | `number` |  A number representing the maximum depth of recursion. The crawler will terminate the crawling of a branch once the maxDepth has been reached. **Warning:** If not specified, the crawler will crawl the **entire** directory tree. This could have signficant performance impact. | `null` | false
   | `ignorePaths`| `array <rgx>` | An array of regular expressions. The crawler will ignore any directories and any files that match to provided paths. | `[/node_modules/]`| false
   | `match` | `array <glob>` | An array of glob strings. If provided, the crawler will collect only the files whose paths match the provided globs. | `null` | false
-  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` | `false`
+  | `strict` | `boolean` | Determines whether the crawler throw an error when trying to access a file the parent process does not have permissions for.  | `false` | false
 
     
 # **API**
