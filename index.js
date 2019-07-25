@@ -1,5 +1,5 @@
-const serial = require('./src/serial');
+const Crawler = require('./src');
 
 module.exports = {
-  serial
+  Crawler
 };
