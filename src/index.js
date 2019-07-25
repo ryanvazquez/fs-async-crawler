@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const micromatch = require('micromatch');
 
-const TaskQueue = require('./taskQueue');
+const TaskQueue = require('./TaskQueue');
 const once = require('../util/once');
 
 class Crawler extends TaskQueue {
@@ -30,8 +30,9 @@ class Crawler extends TaskQueue {
     return true;
   }
 
-  crawl(root, depth, onFinish) {
-    const callback = once(onFinish);
+  _crawl(root, depth, onFinish) {
+
+    let callback = once(onFinish);
 
     if (depth !== undefined && depth < 0) {
       return this.nextTickResult([], callback);
@@ -62,7 +63,7 @@ class Crawler extends TaskQueue {
         }
 
         if (files.length === 0) {
-          return process.nextTickResult(root, callback);
+          return this.nextTickResult(root, callback);
         }
 
         let completed = 0;
@@ -72,7 +73,7 @@ class Crawler extends TaskQueue {
         function enqueueTask(file) {
           const filePath = path.join(root, file);
           function task(done) {
-            this.crawl(filePath, depth - 1, (pathErr, result) => {
+            this._crawl(filePath, depth - 1, (pathErr, result) => {
               if (pathErr) {
                 hasErrors = true;
                 return this.nextTickError(err, callback);
@@ -102,16 +103,14 @@ class Crawler extends TaskQueue {
     });
   }
 
-  all(onFinish) {
-    const finished = once(onFinish);
-
-    this.crawl(this.root, this.maxDepth, finished);
+  crawl(onFinish) {
+    this._crawl(this.root, this.maxDepth, onFinish);
   }
 
   forEach(iteratee, onFinish) {
     const finished = once(onFinish);
 
-    this.crawl(this.root, this.maxDepth, (err, files) => {
+    this._crawl(this.root, this.maxDepth, (err, files) => {
       if (err) {
         return this.nextTickError(err, finished);
       }
@@ -148,7 +147,7 @@ class Crawler extends TaskQueue {
   map(iteratee, onFinish) {
     const finished = once(onFinish);
 
-    this.crawl(this.root, this.maxDepth, (err, files) => {
+    this._crawl(this.root, this.maxDepth, (err, files) => {
       if (err) {
         return this.nextTickError(err, finished);
       }
@@ -187,7 +186,7 @@ class Crawler extends TaskQueue {
   filter(predicate, onFinish) {
     const finished = once(onFinish);
 
-    this.crawl(this.root, this.maxDepth, (err, files) => {
+    this._crawl(this.root, this.maxDepth, (err, files) => {
       if (err) {
         return this.nextTickError(err, finished);
       }
@@ -230,7 +229,7 @@ class Crawler extends TaskQueue {
     let initialValue = initVal;
     let finished = once(onFinish);
 
-    this.crawl(this.root, this.maxDepth, (err, files) => {
+    this._crawl(this.root, this.maxDepth, (err, files) => {
       if (err) {
         this.nextTickError(err, finished);
       }

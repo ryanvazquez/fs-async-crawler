@@ -91,7 +91,7 @@ describe('fs-async-crawler', () => {
       `${cwd}/dir2/subdir1/subsubdir1/helloWorld.txt`,
     ];
 
-    crawler.all((err, files) => {
+    crawler.crawl((err, files) => {
       expect(err).toBe(null);
       expect(files).toStrictEqual(results);
       done();
@@ -104,7 +104,7 @@ describe('fs-async-crawler', () => {
 
     crawler = new Crawler(config);
 
-    crawler.all((err, files) => {
+    crawler.crawl((err, files) => {
       expect(err).toBe(null);
       expect(files.length).toBe(0);
       done();
@@ -117,7 +117,7 @@ describe('fs-async-crawler', () => {
 
     crawler = new Crawler(config);
 
-    crawler.all((err, files) => {
+    crawler.crawl((err, files) => {
       expect(err).toBe(null);
       expect(files.length).toBe(5);
       expect(files.indexOf(`${cwd}/node_modules/some-module/index.js`)).toBe(-1);
@@ -131,7 +131,7 @@ describe('fs-async-crawler', () => {
 
     crawler = new Crawler(config);
 
-    crawler.all((err, results) => {
+    crawler.crawl((err, results) => {
       expect(err).toBe(null);
       expect(results).toEqual([
         `${cwd}/dir1/helloWorld.html`,

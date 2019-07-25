@@ -1,6 +1,6 @@
 class TaskQueue {
   constructor(config){
-    this.concurrency = config.concurrency || process.env.UV_THREADPOOL_SIZE;
+    this.concurrency = config.concurrency || 4;
     this.running = 0;
     this.queue = [];
     this.done = this.done.bind(this);
