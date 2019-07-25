@@ -5,7 +5,7 @@ const micromatch = require('micromatch');
 const TaskQueue = require('./taskQueue');
 const once = require('../util/once');
 
-class fsCrawler extends TaskQueue {
+class Crawler extends TaskQueue {
   constructor(options) {
     super(options);
     if (options.root === undefined) {
@@ -226,16 +226,9 @@ class fsCrawler extends TaskQueue {
     });
   }
 
-  reduce(reducer, initVal, onFinish) {
+  reduce(initVal, reducer, onFinish) {
     let initialValue = initVal;
-    let finished = onFinish;
-
-    if (typeof initialValue === 'function' && finished === undefined) {
-      finished = initialValue;
-      initialValue = undefined;
-    }
-
-    finished = once(finished);
+    let finished = once(onFinish);
 
     this.crawl(this.root, this.maxDepth, (err, files) => {
       if (err) {
@@ -306,4 +299,4 @@ class fsCrawler extends TaskQueue {
   }
 }
 
-module.exports = fsCrawler;
+module.exports = Crawler;
