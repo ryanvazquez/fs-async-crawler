@@ -1,6 +1,6 @@
 {
-  "name": "fs-crawler",
-  "version": "1.0.0",
+  "name": "fs-async-crawler",
+  "version": "0.0.1",
   "description": "Asynchronous options for crawling file system",
   "main": "index.js",
   "repository": {
@@ -17,7 +17,7 @@
     "crawl"
   ],
   "author": "Ryan Vazquez",
-  "license": "MIT",
+  "license": "ISC",
   "bugs": {
     "url": "https://github.com/ryanvazquez/read-dir/issues"
   },
