@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/ryanvazquez/fs-async-crawler.svg?branch=master)](https://travis-ci.org/ryanvazquez/fs-async-crawler)
 
 # fs-async-crawler
-A collection of configurable file system crawlers.
+File sytem crawler and async API for Node.js
 
 ## **Install**
 ```sh
